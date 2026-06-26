@@ -18,7 +18,7 @@ const Header = ({activeHeading}) => {
   const { isAuthenticated, user,loading } = useSelector((state) => state.user);
   const {allProducts}=useSelector((state)=>state.products)
   // const { wishlist } = useSelector((state) => state.wishlist);
-  // const { cart } = useSelector((state) => state.cart);
+  const { cart } = useSelector((state) => state.cart);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchData, setSearchData] = useState(null);
   const [active, setActive] = useState(false);
@@ -28,12 +28,17 @@ const Header = ({activeHeading}) => {
   const [open, setOpen] = useState(false);
   const handleSearchChange = (e) => {
     const term = e.target.value;
-    setSearchTerm(term) ; 
-
-    const filteredProducts = allProducts && allProducts.filter((product) =>
+    console.log(term)
+    setSearchTerm(term); 
+    if(term){
+      const filteredProducts = allProducts && allProducts.filter((product) =>
       product.name.toLowerCase().includes(term.toLowerCase())
     );
     setSearchData(filteredProducts);
+  }else{
+    setSearchData(null)
+  }
+    
   };
 
   window.addEventListener("scroll", () => {
@@ -68,14 +73,14 @@ const Header = ({activeHeading}) => {
               className="absolute right-2 top-1.5 cursor-pointer"
             />
             {searchData && searchData.length !== 0 ? (
-              <div className="absolute min-h-[30vh] bg-slate-50 shadow-sm-2 z-[9] p-4">
+              <div className="min-h-[0] absolute min-w-[46vw] bg-slate-50 shadow-sm-2 z-[9] p-4">
                   {searchData &&
                   searchData.map((i, index) => {
                     const d= i.name;
 
-                    const Product_name = d.replace(/\s+/g,"-");
+                    const id = i._id;
                     return (
-                      <Link to={`/product/${Product_name}`}>
+                      <Link to={`/product/${id}`}>
                         <div className="w-full flex items-start-py-3">
                           <img
                             src={`${backend_url}/${i.images[0]}`}
@@ -148,7 +153,7 @@ const Header = ({activeHeading}) => {
               >
                 <AiOutlineShoppingCart size={30} color="rgb(255 255 255 / 83%)" />
                 <span className="absolute right-0 top-0 rounded-full bg-[#617A55] w-4 h-4 top right p-0 m-0 text-white font-mono text-[12px] leading-tight text-center">
-                  1
+                  {cart&&cart.length}
                 </span>
               </div>
             </div>
@@ -217,7 +222,7 @@ const Header = ({activeHeading}) => {
             >
               <AiOutlineShoppingCart size={30} />
               <span class="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 top right p-0 m-0 text-white font-mono text-[12px]  leading-tight text-center">
-                {/* {cart && cart.length} */}
+                 {cart && cart.length} 
               </span>
             </div>
           </div>

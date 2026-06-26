@@ -4,27 +4,28 @@ import { IoBagHandleOutline } from "react-icons/io5";
 import { HiPlus, HiOutlineMinus } from "react-icons/hi";
 import styles from '../../styles/styles';
 import { Link } from "react-router-dom";
-
+import {useSelector} from 'react-redux'
+import {backend_url} from '../../server'
+import { addTocart, removeFromCart } from "../../redux/actions/cart";
+import { useDispatch } from 'react-redux';
+import {toast} from 'react-toastify'
 const Cart = ({ setOpenCart }) => {
 
-    const cartData = [
-        {
-            name: "Iphone 14 pro max 256gb ssd and 8gb ram silver colour",
-            description: "test",
-            price: 999,
-        },
-        {
-            name: "Iphone 14 pro max 256gb ssd and 8gb ram silver colour",
-            description: "test",
-            price: 999,
-        },
-        {
-            name: "Iphone 14 pro max 256gb ssd and 8gb ram silver colour",
-            description: "test",
-            price: 999,
-        },
+    const {cart}=useSelector((state)=>state.cart)
+  const dispatch = useDispatch();
 
-    ]
+  const removeFromCartHandler = (data) => {
+    dispatch(removeFromCart(data));
+  };
+  
+  const totalPrice = cart.reduce(
+    (acc, item) => acc + item.qty * item.discountPrice,
+    0
+  );
+
+  const quantityChangeHandler = (data) => {
+    dispatch(addTocart(data));
+  };
     return (
         <div className='fixed top-0 left-0 w-full bg-[#0000004b] h-screen z-10'>
             <div className="fixed top-0 right-0 min-h-full w-[25%] bg-white flex flex-col justify-between shadow-sm">
@@ -39,13 +40,13 @@ const Cart = ({ setOpenCart }) => {
                     {/* Item length */}
                     <div className={`${styles.normalFlex} p-4`}>
                         <IoBagHandleOutline size={25} />
-                        <h5 className="pl-2 text-[20px] font-[500]">3 items</h5>
+                        <h5 className="pl-2 text-[20px] font-[500]">{cart&&cart.length}</h5>
                     </div>
 
                     {/* cart Single Items */}
                     <div className="w-full border-t">
-                        {cartData && cartData.map((i, index) => (
-                            <CartSingle key={index} data={i} />
+                        {cart && cart.map((i, index) => (
+                            <CartSingle key={index} data={i} quantityChangeHandler={quantityChangeHandler} removeFromCartHandler={removeFromCartHandler}/>
                         ))
                         }
                     </div>
@@ -56,7 +57,7 @@ const Cart = ({ setOpenCart }) => {
                     <Link to="/checkout">
                         <div className={`h-[45px] flex items-center justify-center w-[100%] bg-[#617A55] rounded-[5px]`}>
                             <h1 className="text-[#fff] text-[18px] font-[600]">
-                                Checkout Now (USD$876)
+                                Checkout Now (USD${totalPrice})
                             </h1>
                         </div>
                     </Link>
@@ -67,35 +68,50 @@ const Cart = ({ setOpenCart }) => {
     )
 }
 
-const CartSingle = ({ data }) => {
-    const [value, setValue] = useState(1);
-    const totalPrice = data.price * value;
-
+const CartSingle = ({ data,quantityChangeHandler, removeFromCartHandler  }) => {
+    const [value, setValue] = useState(data.qty);
+    const totalPrice = data.discountPrice * value;
+    const increment = (data) => {
+        if (data.stock < value) {
+          toast.error("Product stock limited!");
+        } else {
+          setValue(value + 1);
+          const updateCartData = { ...data, qty: value + 1 };
+          quantityChangeHandler(updateCartData);
+        }
+      };
+    
+      const decrement = (data) => {
+        setValue(value === 1 ? 1 : value - 1);
+        const updateCartData = { ...data, qty: value === 1 ? 1 : value - 1 };
+        quantityChangeHandler(updateCartData);
+      };
+    
     return (
         <div className="border-b p-4">
             <div className="w-full flex items-center">
                 <div>
                     <div className={`${styles.normalFlex} bg-[#617A55] border border-[#99A98F] rounded-full w-[25px] h-[25px] justify-center cursor-pointer`}
-                        onClick={() => setValue(value + 1)}
+                        onClick={() => increment(data)}
                     >
                         <HiPlus size={18} color="#fff" />
                     </div>
-                    <span className="pl-[10px]">{value}</span>
+                    <span className="pl-[10px]">{data.qty}</span>
                     <div className="bg-[#a7abb14f] rounded-full w-[25px] h-[25px] flex items-center justify-center cursor-pointer"
-                        onClick={() => setValue(value === 1 ? 1 : value - 1)}
+                        onClick={() => decrement(data)}
                     >
                         <HiOutlineMinus size={16} color="#7d879c" />
                     </div>
                 </div>
                 <img
-                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6Cmxbt0HDH_aTop2MB8W-0CCxpI-skA_Z_A&usqp=CAU"
+                    src={`${backend_url}/${data.images[0]}`}
                     alt=""
-                    className="w-[80px] h-[80px] ml-2 mr-2 rounded-[5px]"
+                    className="w-[130px] h-min ml-2 mr-4 rounded-[5px]"
                 />
-                <div className="pl-[5px]">
+                <div className="min-w-[180px] pl-[5px]">
                     <h1>{data.name}</h1>
                     <h4 className="font-[400] text-[15px] text-[#00000082]">
-                        ${data.price} * {value}
+                        ${data.discountPrice} * {value}
                     </h4>
                     <h4 className="font-[600] text-[17px] pt-[3px] text-[#617A55] font-Roboto">
                         US${totalPrice}
@@ -103,6 +119,7 @@ const CartSingle = ({ data }) => {
                 </div>
                 <RxCross1
                     className="cursor-pointer"
+                    onClick={() => removeFromCartHandler(data)}
                 />
             </div>
         </div>

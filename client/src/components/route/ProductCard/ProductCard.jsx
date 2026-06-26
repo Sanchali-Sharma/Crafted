@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { backend_url } from '../../../server';
 import styles from "../../../styles/styles";
+import { addTocart } from '../../../redux/actions/cart';
 import { 
     AiFillHeart, 
     AiFillStar, 
@@ -11,26 +12,44 @@ import {
     AiOutlineStar 
 } from "react-icons/ai";
 import ProductDetailsCard from "../ProductDetailsCard/ProductDetailsCard.jsx";
+import { useSelector,useDispatch } from 'react-redux';
+import {toast} from 'react-toastify'
 
 const ProductCard = ({ data }) => {
     const [click, setClick] = useState(false);
     const [open, setOpen] = useState(false);
-    
+    const count=1;
     const d = data.name;
-    const product_name = d.replace(/\s+/g, "-");
+    const dispatch=useDispatch()
+    const {cart}=useSelector((state=>state.cart))
+const addToCart=(id)=>{
+    const isExist=cart&&cart.find((i)=>i._id===id)
+    if(isExist){
+        toast.error("Item already in cart")
+    }
+    else {
+        if (data.stock < 1) {
+          toast.error("Product stock limited!");
+        } else {
+          const cartData = { ...data, qty: count };
+          dispatch(addTocart(cartData));
+          toast.success("Item added to cart successfully!");
+        }
+    }
+}
 
     return (
         <>
             <div className='z-2 w-full h-[370px] bg-white rounded-lg shadow-sm p-3 relative cursor-pointer'>
                 <div className="flex justify-end">
                 </div>
-                <Link to={`/product/${data.id}`}>
+                <Link to={`/product/${data._id}`}>
                     <img src={`${backend_url}/${data.images&&data.images[0]}`} alt="" className='w-full h-[170px] object-contain' />
                 </Link>
                 <Link to="/">
                     <h5 className={`${styles.shop_name}`}>{data.shop.name}</h5>
                 </Link>
-                <Link to={`/product/${data.id}`}>
+                <Link to={`/product/${data._id}`}>
                     <h4 className="pb-3 font-[500]">
                         {data.name.length > 40 ? data.name.slice(0, 40) + "..." : data.name}
                     </h4>
@@ -86,7 +105,7 @@ const ProductCard = ({ data }) => {
                     <AiOutlineShoppingCart
                         size={25}
                         className="cursor-pointer absolute right-0 top-24"
-                        onClick={() => setOpen(!open)}
+                        onClick={() => addToCart(data._id)}
                         color="#333"
                         title="Add to cart"
                     />
